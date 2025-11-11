@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../pages/login_page.dart';
-import '../pages/points_page.dart'; // ✅ 新增导入
+import '../pages/favorite_cars_page.dart';
+import '../pages/edit_profile_page.dart';
+import '../main.dart'; // ✅ 用于 MainLayout.switchTab()
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -59,93 +61,27 @@ class _ProfilePageState extends State<ProfilePage> {
       body: ListView(
         padding: EdgeInsets.zero,
         children: [
-          // 顶部蓝色信息卡片
-          Container(
-            padding: const EdgeInsets.symmetric(vertical: 28, horizontal: 16),
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                colors: [Color(0xFF1677FF), Color(0xFF409CFF)],
-                begin: Alignment.centerLeft,
-                end: Alignment.centerRight,
-              ),
-            ),
-            child: Column(
-              children: [
-                Row(
-                  children: [
-                    const CircleAvatar(
-                      radius: 28,
-                      backgroundColor: Colors.white,
-                      child: Text(
-                        'U',
-                        style: TextStyle(fontSize: 24, color: Colors.black87),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            username,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 20,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                          Text(
-                            'ID: $userId',
-                            style: const TextStyle(
-                              color: Colors.white70,
-                              fontSize: 13,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    TextButton(
-                      onPressed: () {},
-                      child: const Text(
-                        '编辑资料',
-                        style: TextStyle(color: Colors.white),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 20),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    _buildStatItem('咨询次数', consultCount.toString()),
-                    _buildStatItem('我的积分', points.toString()),
-                    _buildStatItem('收藏车型', favoriteCount.toString()),
-                  ],
-                ),
-              ],
-            ),
-          ),
-
-          // 我的服务
+          _buildHeader(context),
           const SizedBox(height: 8),
           _buildSectionHeader('我的服务'),
 
-          // ✅ 点击跳转积分中心
+          // ✅ 点击“我的积分”直接切换到底部导航栏的积分中心
           _buildListItem(
             title: '我的积分',
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const PointsPage()),
-              );
-            },
+            onTap: () => MainLayout.switchTab(3),
           ),
 
-          _buildListItem(title: '收藏车型'),
+          _buildListItem(
+            title: '收藏车型',
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const FavoriteCarsPage()),
+            ),
+          ),
 
-          // 系统设置
           const SizedBox(height: 8),
           _buildSectionHeader('系统设置'),
+
           _buildListItem(title: '帮助中心'),
           _buildListItem(title: '隐私政策'),
 
@@ -168,6 +104,89 @@ class _ProfilePageState extends State<ProfilePage> {
             ),
           ),
           const SizedBox(height: 40),
+        ],
+      ),
+    );
+  }
+
+  // 顶部蓝色信息卡片 + 右上角“编辑资料”按钮
+  Widget _buildHeader(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 28, horizontal: 16),
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          colors: [Color(0xFF1677FF), Color(0xFF409CFF)],
+          begin: Alignment.centerLeft,
+          end: Alignment.centerRight,
+        ),
+      ),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              const CircleAvatar(
+                radius: 28,
+                backgroundColor: Colors.white,
+                child: Text(
+                  'U',
+                  style: TextStyle(fontSize: 24, color: Colors.black87),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      username,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 20,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    Text(
+                      'ID: $userId',
+                      style: const TextStyle(
+                        color: Colors.white70,
+                        fontSize: 13,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              TextButton(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const EditProfilePage()),
+                  );
+                },
+                child: const Text('编辑资料', style: TextStyle(color: Colors.white)),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              _buildStatItem('咨询次数', consultCount.toString()),
+
+              // ✅ 点击积分数字也切换到底部“积分中心”
+              GestureDetector(
+                onTap: () => MainLayout.switchTab(3),
+                child: _buildStatItem('我的积分', points.toString()),
+              ),
+
+              GestureDetector(
+                onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const FavoriteCarsPage()),
+                ),
+                child: _buildStatItem('收藏车型', favoriteCount.toString()),
+              ),
+            ],
+          ),
         ],
       ),
     );

@@ -5,7 +5,6 @@ import 'pages/chat_page.dart';
 import 'pages/profile_page.dart';
 import 'pages/points_page.dart';
 
-
 void main() {
   runApp(const CarBuyingAdviceApp());
 }
@@ -27,41 +26,66 @@ class CarBuyingAdviceApp extends StatelessWidget {
         useMaterial3: true,
         fontFamily: 'sans-serif',
       ),
-      home: const LoginPage(), // 默认从登录页进入
+      home: const LoginPage(), // 登录后再跳转 MainLayout
     );
   }
 }
 
 ///
-/// 登录后主界面 —— 底部导航（咨询 / 咨询记录 / 我的 / 我的积分）
+/// 登录后主界面 —— 底部导航栏结构
 ///
 class MainLayout extends StatefulWidget {
   const MainLayout({super.key});
+
+  /// ✅ 静态切换方法，用于从其他页面（如 ProfilePage）切换 Tab
+  static void switchTab(int index) {
+    final state = _MainLayoutState.instance;
+    if (state != null && state.mounted) {
+      state._switchTo(index);
+    }
+  }
 
   @override
   State<MainLayout> createState() => _MainLayoutState();
 }
 
 class _MainLayoutState extends State<MainLayout> {
+  static _MainLayoutState? instance;
   int _currentIndex = 0;
 
-  final List<Widget> _pages = [
-    const RecommendPage(), // 咨询
-    const ChatPage(),      // 咨询记录（这里你可以换成 history_page.dart）
-    const ProfilePage(),   // 我的
-    const PointsPage(),    // 积分中心（可以先建个占位页）
+  _MainLayoutState() {
+    instance = this;
+  }
+
+  /// ✅ 内部安全切换方法（修复 protected 成员警告）
+  void _switchTo(int index) {
+    if (!mounted) return;
+    setState(() => _currentIndex = index);
+  }
+
+  final List<Widget> _pages = const [
+    RecommendPage(), // 0: 车型推荐 / 咨询
+    ChatPage(),      // 1: 咨询记录
+    ProfilePage(),   // 2: 我的
+    PointsPage(),    // 3: 积分中心
   ];
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: _pages[_currentIndex],
+      // ✅ IndexedStack 保留各页状态
+      body: IndexedStack(
+        index: _currentIndex,
+        children: _pages,
+      ),
+
+      // ✅ 底部导航栏
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _currentIndex,
         type: BottomNavigationBarType.fixed,
         selectedItemColor: const Color(0xFF1677FF),
         unselectedItemColor: Colors.grey,
-        onTap: (index) => setState(() => _currentIndex = index),
+        onTap: (index) => _switchTo(index),
         items: const [
           BottomNavigationBarItem(
             icon: Icon(Icons.chat_outlined),
@@ -88,5 +112,3 @@ class _MainLayoutState extends State<MainLayout> {
     );
   }
 }
-
-
