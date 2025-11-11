@@ -47,7 +47,7 @@ class _MainLayoutState extends State<MainLayout> {
     RecommendPage(), // 咨询
     ChatPage(),      // 咨询记录（这里你可以换成 history_page.dart）
     ProfilePage(),   // 我的
-    PointsPage(),    // 我的积分（可以先建个占位页）
+    PointsPage(),    // 积分中心（可以先建个占位页）
   ];
 
   @override
@@ -79,7 +79,7 @@ class _MainLayoutState extends State<MainLayout> {
           BottomNavigationBarItem(
             icon: Icon(Icons.card_giftcard_outlined),
             activeIcon: Icon(Icons.card_giftcard),
-            label: '我的积分',
+            label: '积分中心',
           ),
         ],
       ),
