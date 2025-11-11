@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../main.dart'; // 用于跳转到 MainLayout
+import '../main.dart'; // 登录成功后跳转到 MainLayout
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -19,6 +19,7 @@ class _LoginPageState extends State<LoginPage> {
     final pwd = passwordController.text.trim();
 
     if (phone.isEmpty || pwd.isEmpty) {
+      if (!mounted) return; // ✅ 防止 use_build_context_synchronously 警告
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('请输入手机号和密码')),
       );
@@ -32,7 +33,7 @@ class _LoginPageState extends State<LoginPage> {
     await prefs.setInt('consultCount', 5);
     await prefs.setInt('favoriteCount', 3);
 
-    // ✅ 登录后进入主界面（带导航栏）
+    if (!mounted) return; // ✅ 关键修复点
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(builder: (_) => const MainLayout()),
@@ -63,7 +64,7 @@ class _LoginPageState extends State<LoginPage> {
                 borderRadius: BorderRadius.circular(16),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
+                    color: Colors.black.withValues(alpha: 0.05),
                     blurRadius: 8,
                     offset: const Offset(0, 2),
                   ),

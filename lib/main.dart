@@ -3,6 +3,8 @@ import 'pages/login_page.dart';
 import 'pages/recommend_page.dart';
 import 'pages/chat_page.dart';
 import 'pages/profile_page.dart';
+import 'pages/points_page.dart';
+
 
 void main() {
   runApp(const CarBuyingAdviceApp());
@@ -43,11 +45,11 @@ class MainLayout extends StatefulWidget {
 class _MainLayoutState extends State<MainLayout> {
   int _currentIndex = 0;
 
-  final List<Widget> _pages = const [
-    RecommendPage(), // 咨询
-    ChatPage(),      // 咨询记录（这里你可以换成 history_page.dart）
-    ProfilePage(),   // 我的
-    PointsPage(),    // 积分中心（可以先建个占位页）
+  final List<Widget> _pages = [
+    const RecommendPage(), // 咨询
+    const ChatPage(),      // 咨询记录（这里你可以换成 history_page.dart）
+    const ProfilePage(),   // 我的
+    const PointsPage(),    // 积分中心（可以先建个占位页）
   ];
 
   @override
@@ -87,25 +89,4 @@ class _MainLayoutState extends State<MainLayout> {
   }
 }
 
-///
-/// “我的积分”占位页（后续可替换为实际积分页）
-///
-class PointsPage extends StatelessWidget {
-  const PointsPage({super.key});
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('我的积分'),
-        centerTitle: true,
-      ),
-      body: const Center(
-        child: Text(
-          '这里展示积分详情或兑换商城',
-          style: TextStyle(fontSize: 16),
-        ),
-      ),
-    );
-  }
-}
