@@ -12,70 +12,48 @@ class RecommendPage extends StatefulWidget {
 
 class _RecommendPageState extends State<RecommendPage> {
   // 表单状态变量
-  final TextEditingController _minBudgetController = TextEditingController();
-  final TextEditingController _maxBudgetController = TextEditingController();
-  String? _selectedVehicleType;
-  final TextEditingController _customVehicleTypeController = TextEditingController();
-  final List<String> _selectedFuelTypes = [];
+  final TextEditingController _budgetRangeController = TextEditingController();
+  final TextEditingController _preferredTypeController = TextEditingController();
+  final TextEditingController _useCaseController = TextEditingController();
+  final TextEditingController _fuelTypeController = TextEditingController();
+  final TextEditingController _brandPreferenceController = TextEditingController();
   
-  // 品牌相关变量
-  final List<String?> _selectedBrands = [null, null];
-  final List<TextEditingController> _customBrandControllers = [
-    TextEditingController(),
-    TextEditingController(),
-  ];
-  
-  final List<String> _selectedScenarios = [];
-  final TextEditingController _otherNeedsController = TextEditingController();
-
-  bool _isLoading = false;
-
-  // 是否显示自定义车型输入框
-  bool get _showCustomVehicleTypeInput => _selectedVehicleType == '其他';
-
-  // 是否显示自定义品牌输入框
-  List<bool> get _showCustomBrandInputs => [
-    _selectedBrands[0] == '其他',
-    _selectedBrands[1] == '其他',
-  ];
+  // 自定义输入控制器
+  final TextEditingController _customUseCaseController = TextEditingController();
+  final TextEditingController _customFuelTypeController = TextEditingController();
 
   // 选项数据
   final List<String> _vehicleTypeOptions = ['SUV', '轿车', 'MPV', '其他'];
-  
-  final List<String> _brandOptions = [
-    '比亚迪',
-    '特斯拉',
-    '丰田',
-    '本田',
-    '大众',
-    '宝马',
-    '奔驰',
-    '奥迪',
-    '其他'
-  ];
+  final List<String> _fuelTypeOptions = ['汽油', '柴油', '混合动力', '纯电动', '氢能源', '其他'];
+  final List<String> _scenarioOptions = ['通勤', '家庭', '商务', '其他'];
 
-  final List<String> _fuelTypeOptions = [
-    '汽油',
-    '柴油',
-    '混合动力',
-    '纯电动',
-    '氢能源'
-  ];
+  // 选择状态
+  String? _selectedUseCase;
+  bool _showCustomUseCaseInput = false;
+  bool _showCustomFuelTypeInput = false;
 
-  final List<String> _scenarioOptions = [
-    '通勤',
-    '家庭',
-    '商务',
-    '其他'
-  ];
+  bool _isLoading = false;
+
+  // Token存储
+  String _accessToken = 'your-access-token';
+  String _refreshToken = 'your-refresh-token';
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('购车咨询'),
-        backgroundColor: const Color(0xFF1677FF),
-        foregroundColor: Colors.white,
+        title: const Text(
+          '购车咨询',
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        centerTitle: true, // 标题居中
+        backgroundColor: Colors.white, // 背景白色
+        elevation: 0.5,
+        foregroundColor: Colors.black, // 文字颜色黑色
+        iconTheme: const IconThemeData(color: Colors.black), // 返回图标黑色
       ),
       body: Stack(
         children: [
@@ -84,45 +62,51 @@ class _RecommendPageState extends State<RecommendPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // 购车预算范围 - 两个输入框
-                _buildSectionTitle('购车预算范围 *'),
-                _buildBudgetInputs(),
+                // 预算范围
+                _buildSectionTitle('预算范围 *'),
+                _buildBudgetInput(),
                 
                 const SizedBox(height: 24),
                 
-                // 偏好车型 - 4个框
+                // 偏好车型
                 _buildSectionTitle('偏好车型 *'),
                 _buildVehicleTypeGrid(),
                 
-                // 自定义车型输入框（当选择"其他"时显示）
-                if (_showCustomVehicleTypeInput) ...[
+                // 自定义车型输入框
+                if (_preferredTypeController.text == '其他') ...[
                   const SizedBox(height: 12),
                   _buildCustomVehicleTypeInput(),
                 ],
                 
                 const SizedBox(height: 24),
                 
-                // 主要使用场景
+                // 主要使用场景 - 四个框
                 _buildSectionTitle('主要使用场景 *'),
-                _buildScenarioGrid(),
+                _buildUseCaseGrid(),
+                
+                // 自定义使用场景输入框
+                if (_showCustomUseCaseInput) ...[
+                  const SizedBox(height: 12),
+                  _buildCustomUseCaseInput(),
+                ],
                 
                 const SizedBox(height: 24),
                 
-                // 燃料类型偏好 - 多选
+                // 燃料类型偏好 - 包含其他选项
                 _buildSectionTitle('燃料类型偏好'),
                 _buildFuelTypeGrid(),
                 
+                // 自定义燃料类型输入框
+                if (_showCustomFuelTypeInput) ...[
+                  const SizedBox(height: 12),
+                  _buildCustomFuelTypeInput(),
+                ],
+                
                 const SizedBox(height: 24),
                 
-                // 品牌偏好 - 两个下拉框
+                // 品牌偏好
                 _buildSectionTitle('品牌偏好'),
-                _buildBrandSelection(),
-                
-                const SizedBox(height: 24),
-                
-                // 其他特殊需求
-                _buildSectionTitle('其他特殊需求'),
-                _buildOtherNeedsInput(),
+                _buildBrandPreferenceInput(),
                 
                 const SizedBox(height: 40),
                 
@@ -158,47 +142,16 @@ class _RecommendPageState extends State<RecommendPage> {
     );
   }
 
-  Widget _buildBudgetInputs() {
-    return Row(
-      children: [
-        Expanded(
-          child: TextField(
-            controller: _minBudgetController,
-            decoration: InputDecoration(
-              hintText: '最低预算',
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              suffixText: '万',
-              suffixStyle: const TextStyle(
-                color: Colors.black87,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-            keyboardType: TextInputType.number,
-          ),
+  Widget _buildBudgetInput() {
+    return TextField(
+      controller: _budgetRangeController,
+      decoration: InputDecoration(
+        hintText: '例如：20万元左右',
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
         ),
-        const SizedBox(width: 16),
-        Expanded(
-          child: TextField(
-            controller: _maxBudgetController,
-            decoration: InputDecoration(
-              hintText: '最高预算',
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              suffixText: '万',
-              suffixStyle: const TextStyle(
-                color: Colors.black87,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-            keyboardType: TextInputType.number,
-          ),
-        ),
-      ],
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      ),
     );
   }
 
@@ -215,15 +168,12 @@ class _RecommendPageState extends State<RecommendPage> {
       itemCount: _vehicleTypeOptions.length,
       itemBuilder: (context, index) {
         final option = _vehicleTypeOptions[index];
-        final isSelected = _selectedVehicleType == option;
+        final isSelected = _preferredTypeController.text == option;
         
         return GestureDetector(
           onTap: () {
             setState(() {
-              _selectedVehicleType = option;
-              if (option != '其他') {
-                _customVehicleTypeController.clear();
-              }
+              _preferredTypeController.text = option;
             });
           },
           child: Container(
@@ -251,7 +201,9 @@ class _RecommendPageState extends State<RecommendPage> {
 
   Widget _buildCustomVehicleTypeInput() {
     return TextField(
-      controller: _customVehicleTypeController,
+      onChanged: (value) {
+        setState(() {});
+      },
       decoration: InputDecoration(
         hintText: '请输入其他车型',
         border: OutlineInputBorder(
@@ -262,7 +214,8 @@ class _RecommendPageState extends State<RecommendPage> {
     );
   }
 
-  Widget _buildScenarioGrid() {
+  // 主要使用场景网格 - 四个框
+  Widget _buildUseCaseGrid() {
     return GridView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
@@ -275,15 +228,16 @@ class _RecommendPageState extends State<RecommendPage> {
       itemCount: _scenarioOptions.length,
       itemBuilder: (context, index) {
         final option = _scenarioOptions[index];
-        final isSelected = _selectedScenarios.contains(option);
+        final isSelected = _selectedUseCase == option;
         
         return GestureDetector(
           onTap: () {
             setState(() {
-              if (_selectedScenarios.contains(option)) {
-                _selectedScenarios.remove(option);
-              } else {
-                _selectedScenarios.add(option);
+              _selectedUseCase = option;
+              _useCaseController.text = option;
+              _showCustomUseCaseInput = (option == '其他');
+              if (option != '其他') {
+                _customUseCaseController.clear();
               }
             });
           },
@@ -310,6 +264,27 @@ class _RecommendPageState extends State<RecommendPage> {
     );
   }
 
+  // 自定义使用场景输入
+  Widget _buildCustomUseCaseInput() {
+    return TextField(
+      controller: _customUseCaseController,
+      onChanged: (value) {
+        setState(() {
+          _useCaseController.text = value;
+        });
+      },
+      maxLines: 3,
+      decoration: InputDecoration(
+        hintText: '例如：每天上下班通勤，来回大概40公里，周末偶尔在市区逛逛',
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+        ),
+        contentPadding: const EdgeInsets.all(16),
+      ),
+    );
+  }
+
+  // 燃料类型网格 - 包含其他选项
   Widget _buildFuelTypeGrid() {
     return GridView.builder(
       shrinkWrap: true,
@@ -323,15 +298,15 @@ class _RecommendPageState extends State<RecommendPage> {
       itemCount: _fuelTypeOptions.length,
       itemBuilder: (context, index) {
         final option = _fuelTypeOptions[index];
-        final isSelected = _selectedFuelTypes.contains(option);
+        final isSelected = _fuelTypeController.text == option;
         
         return GestureDetector(
           onTap: () {
             setState(() {
-              if (_selectedFuelTypes.contains(option)) {
-                _selectedFuelTypes.remove(option);
-              } else {
-                _selectedFuelTypes.add(option);
+              _fuelTypeController.text = option;
+              _showCustomFuelTypeInput = (option == '其他');
+              if (option != '其他') {
+                _customFuelTypeController.clear();
               }
             });
           },
@@ -359,57 +334,17 @@ class _RecommendPageState extends State<RecommendPage> {
     );
   }
 
-  Widget _buildBrandSelection() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _buildSingleBrandDropdown(0),
-        if (_showCustomBrandInputs[0]) ...[
-          const SizedBox(height: 8),
-          _buildCustomBrandInput(0),
-        ],
-        const SizedBox(height: 12),
-        _buildSingleBrandDropdown(1),
-        if (_showCustomBrandInputs[1]) ...[
-          const SizedBox(height: 8),
-          _buildCustomBrandInput(1),
-        ],
-      ],
-    );
-  }
-
-  Widget _buildSingleBrandDropdown(int index) {
-    return DropdownButtonFormField<String>(
-      value: _selectedBrands[index],
-      decoration: InputDecoration(
-        hintText: '请选择品牌 ${index + 1}',
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
-        ),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      ),
-      items: _brandOptions.map((String value) {
-        return DropdownMenuItem<String>(
-          value: value,
-          child: Text(value),
-        );
-      }).toList(),
-      onChanged: (String? newValue) {
+  // 自定义燃料类型输入
+  Widget _buildCustomFuelTypeInput() {
+    return TextField(
+      controller: _customFuelTypeController,
+      onChanged: (value) {
         setState(() {
-          _selectedBrands[index] = newValue;
-          if (newValue != '其他') {
-            _customBrandControllers[index].clear();
-          }
+          _fuelTypeController.text = value;
         });
       },
-    );
-  }
-
-  Widget _buildCustomBrandInput(int index) {
-    return TextField(
-      controller: _customBrandControllers[index],
       decoration: InputDecoration(
-        hintText: '请输入其他品牌名称 ${index + 1}',
+        hintText: '请输入其他燃料类型',
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
         ),
@@ -418,20 +353,21 @@ class _RecommendPageState extends State<RecommendPage> {
     );
   }
 
-  Widget _buildOtherNeedsInput() {
+  // 品牌偏好输入
+  Widget _buildBrandPreferenceInput() {
     return TextField(
-      controller: _otherNeedsController,
-      maxLines: 3,
+      controller: _brandPreferenceController,
       decoration: InputDecoration(
-        hintText: '请输入其他特殊需求...',
+        hintText: '例如：比亚迪、吉利',
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
         ),
-        contentPadding: const EdgeInsets.all(16),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       ),
     );
   }
 
+  // 提交按钮
   Widget _buildSubmitButton() {
     return SizedBox(
       width: double.infinity,
@@ -467,44 +403,34 @@ class _RecommendPageState extends State<RecommendPage> {
 
   void _submitForm() async {
     // 表单验证
-    if (_minBudgetController.text.trim().isEmpty || _maxBudgetController.text.trim().isEmpty) {
-      _showError('请输入购车预算范围');
+    if (_budgetRangeController.text.trim().isEmpty) {
+      _showError('请输入预算范围');
       return;
     }
     
-    final minBudget = double.tryParse(_minBudgetController.text.trim());
-    final maxBudget = double.tryParse(_maxBudgetController.text.trim());
-    
-    if (minBudget == null || maxBudget == null) {
-      _showError('请输入有效的预算数值');
-      return;
-    }
-    
-    if (minBudget >= maxBudget) {
-      _showError('最高预算应大于最低预算');
-      return;
-    }
-    
-    if (_selectedVehicleType == null) {
+    if (_preferredTypeController.text.trim().isEmpty) {
       _showError('请选择偏好车型');
       return;
     }
     
-    if (_selectedVehicleType == '其他' && _customVehicleTypeController.text.trim().isEmpty) {
+    if (_preferredTypeController.text == '其他' && _preferredTypeController.text.trim().isEmpty) {
       _showError('请输入其他车型名称');
       return;
     }
     
-    if (_selectedScenarios.isEmpty) {
+    if (_useCaseController.text.trim().isEmpty) {
       _showError('请选择主要使用场景');
       return;
     }
 
-    for (int i = 0; i < _selectedBrands.length; i++) {
-      if (_selectedBrands[i] == '其他' && _customBrandControllers[i].text.trim().isEmpty) {
-        _showError('请输入其他品牌名称 ${i + 1}');
-        return;
-      }
+    if (_selectedUseCase == '其他' && _customUseCaseController.text.trim().isEmpty) {
+      _showError('请输入其他使用场景');
+      return;
+    }
+
+    if (_fuelTypeController.text == '其他' && _customFuelTypeController.text.trim().isEmpty) {
+      _showError('请输入其他燃料类型');
+      return;
     }
 
     // 显示加载状态
@@ -513,22 +439,21 @@ class _RecommendPageState extends State<RecommendPage> {
     });
 
     try {
-      // 准备表单数据
-      final formData = {
-        'minBudget': _minBudgetController.text.trim(),
-        'maxBudget': _maxBudgetController.text.trim(),
-        'vehicleType': _selectedVehicleType == '其他' ? _customVehicleTypeController.text.trim() : _selectedVehicleType,
-        'brands': _getSelectedBrands(),
-        'fuelTypes': _selectedFuelTypes,
-        'scenarios': _selectedScenarios,
-        'otherNeeds': _otherNeedsController.text.trim(),
-        'timestamp': DateTime.now().millisecondsSinceEpoch,
+      // 准备API请求数据
+      final queryParams = {
+        'budget_range': _budgetRangeController.text.trim(),
+        'preferred_type': _preferredTypeController.text == '其他' 
+            ? _preferredTypeController.text.trim() 
+            : _preferredTypeController.text.trim(),
+        'use_case': _useCaseController.text.trim(),
+        'fuel_type': _fuelTypeController.text.trim(),
+        'brand_preference': _brandPreferenceController.text.trim(),
       };
 
-      print('发送给后端的表单数据: $formData');// 在控制台查看数据
+      print('发送给API的查询参数: $queryParams');
 
-      // 发送数据到后端（现在是模拟的）
-      final response = await _sendDataToBackend(formData);
+      // 发送API请求
+      final response = await _sendApiRequest(queryParams);
       
       // 隐藏加载状态
       setState(() {
@@ -537,15 +462,15 @@ class _RecommendPageState extends State<RecommendPage> {
 
       // 处理响应
       if (response['base']['code'] == 10000) {
-        // 成功，跳转到结果页面并传递后端数据
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => ResultPage(
-            apiResponseData: response, // 传递后端响应数据
+        // 成功，跳转到结果页面
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => ResultPage(
+              apiResponseData: response,
+            ),
           ),
-        ),
-      );
+        );
       } else {
         _showError(response['base']['msg'] ?? '提交失败，请重试');
       }
@@ -558,101 +483,76 @@ class _RecommendPageState extends State<RecommendPage> {
     }
   }
 
-// 使用模拟数据
-Future<Map<String, dynamic>> _sendDataToBackend(Map<String, dynamic> formData) async {
-  // 模拟API调用延迟
-  await Future.delayed(const Duration(seconds: 2));
-  
-  // 直接返回模拟数据
-  return {
-    "base": {
-      "code": 10000,
-      "msg": "success"
-    },
-    "data": {
-      "Analysis": "根据您的预算${formData['minBudget']}-${formData['maxBudget']}万、偏好${formData['vehicleType']}车型、${formData['scenarios'].join(',')}使用场景，我们为您推荐了以下车型。",
-      "Proposal": "基于您的需求，建议考虑以下车型。它们在性能、舒适性和经济性方面均表现优秀。",
-      "Result": [
-        {
-          "ImageUrl": "https://img1.baidu.com/it/u=1626822570,2893215833&fm=253",
-          "CarName": "比亚迪宋PLUS EV",
-          "FuelConsumption": "纯电动",
-          "Power": "135kW/184马力",
-          "Seat": "5座",
-          "Drive": "前驱",
-          "RecommendedReason": "比亚迪宋PLUS EV是一款非常适合城市通勤与家庭使用的纯电动SUV。续航里程长，空间宽敞。"
-        },
-        {
-          "ImageUrl": "https://img0.baidu.com/it/u=2037645185,3408279650&fm=253",
-          "CarName": "吉利帝豪X EV",
-          "FuelConsumption": "纯电动", 
-          "Power": "120kW/163马力",
-          "Seat": "5座",
-          "Drive": "前驱",
-          "RecommendedReason": "吉利帝豪X EV以其时尚动感的设计受到许多消费者的喜爱，性价比高。"
-        }
-      ]
-    }
-  };
-}
-
-  // // 发送数据到后端的方法
-  // Future<Map<String, dynamic>> _sendDataToBackend(Map<String, dynamic> formData) async {
-  //   // TODO: 替换为你的实际API端点
-  //   const apiUrl = 'https://your-backend-api.com/car-recommendation';
+  // 发送API请求
+  Future<Map<String, dynamic>> _sendApiRequest(Map<String, dynamic> queryParams) async {
+    // TODO: 替换为实际的API端点
+    const apiUrl = 'http://your-api-domain.com/api/consult/purchase';
     
-  //   try {
-  //     final response = await http.post(
-  //       Uri.parse(apiUrl),
-  //       headers: {
-  //         'Content-Type': 'application/json',
-  //       },
-  //       body: jsonEncode(formData),
-  //     );
+    try {
+      final uri = Uri.parse(apiUrl).replace(queryParameters: queryParams);
+      
+      final response = await http.get(
+        uri,
+        headers: {
+          'Content-Type': 'application/json',
+          'Access-token': _accessToken,
+          'Refresh-token': _refreshToken,
+        },
+      );
 
-  //     print('后端响应状态码: ${response.statusCode}');
-  //     print('后端响应体: ${response.body}');
+      print('API响应状态码: ${response.statusCode}');
+      print('API响应体: ${response.body}');
 
-  //     if (response.statusCode == 200) {
-  //       // 解析 JSON 响应
-  //       final responseData = jsonDecode(response.body);
-  //       return responseData;
-  //     } else {
-  //       return {
-  //         'base': {
-  //           'code': response.statusCode,
-  //           'msg': '服务器错误: ${response.statusCode}'
-  //         }
-  //       };
-  //     }
-  //   } catch (e) {
-  //     print('HTTP请求异常: $e');
-  //     return {
-  //       'base': {
-  //         'code': 50001,
-  //         'msg': '网络连接失败: $e'
-  //       }
-  //     };
-  //   }
-
-
-  // }
-
-  List<String> _getSelectedBrands() {
-    final List<String> brands = [];
-    for (int i = 0; i < _selectedBrands.length; i++) {
-      if (_selectedBrands[i] != null) {
-        if (_selectedBrands[i] == '其他') {
-          final customBrand = _customBrandControllers[i].text.trim();
-          if (customBrand.isNotEmpty) {
-            brands.add(customBrand);
+      if (response.statusCode == 200) {
+        final responseData = jsonDecode(response.body);
+        return responseData;
+      } else {
+        return {
+          'base': {
+            'code': response.statusCode,
+            'msg': '服务器错误: ${response.statusCode}'
           }
-        } else {
-          brands.add(_selectedBrands[i]!);
-        }
+        };
       }
+    } catch (e) {
+      print('HTTP请求异常: $e');
+      // 返回模拟数据
+      return _getMockResponse(queryParams);
     }
-    return brands;
+  }
+
+  // 返回模拟数据
+  Map<String, dynamic> _getMockResponse(Map<String, dynamic> queryParams) {
+    return {
+      "base": {
+        "code": 10000,
+        "msg": "success"
+      },
+      "data": {
+        "Analysis": "根据您的预算${queryParams['budget_range']}、偏好${queryParams['preferred_type']}车型、${queryParams['use_case']}使用场景，我们为您推荐了以下车型。",
+        "Proposal": "基于您的需求，建议考虑以下车型。它们在性能、舒适性和经济性方面均表现优秀。",
+        "Result": [
+          {
+            "ImageUrl": "https://img1.baidu.com/it/u=1626822570,2893215833&fm=253",
+            "CarName": "比亚迪宋PLUS EV",
+            "FuelConsumption": "纯电动",
+            "Power": "135kW/184马力",
+            "Seat": "5座",
+            "Drive": "前驱",
+            "RecommendedReason": "比亚迪宋PLUS EV是一款非常适合城市通勤与家庭使用的纯电动SUV。续航里程长，空间宽敞。"
+          },
+          {
+            "ImageUrl": "https://img0.baidu.com/it/u=2037645185,3408279650&fm=253",
+            "CarName": "吉利帝豪X EV",
+            "FuelConsumption": "纯电动", 
+            "Power": "120kW/163马力",
+            "Seat": "5座",
+            "Drive": "前驱",
+            "RecommendedReason": "吉利帝豪X EV以其时尚动感的设计受到许多消费者的喜爱，性价比高。"
+          }
+        ]
+      }
+    };
   }
 
   void _showError(String message) {
@@ -666,13 +566,13 @@ Future<Map<String, dynamic>> _sendDataToBackend(Map<String, dynamic> formData) a
 
   @override
   void dispose() {
-    _minBudgetController.dispose();
-    _maxBudgetController.dispose();
-    _customVehicleTypeController.dispose();
-    for (var controller in _customBrandControllers) {
-      controller.dispose();
-    }
-    _otherNeedsController.dispose();
+    _budgetRangeController.dispose();
+    _preferredTypeController.dispose();
+    _useCaseController.dispose();
+    _fuelTypeController.dispose();
+    _brandPreferenceController.dispose();
+    _customUseCaseController.dispose();
+    _customFuelTypeController.dispose();
     super.dispose();
   }
 }
