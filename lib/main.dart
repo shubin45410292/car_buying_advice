@@ -3,6 +3,8 @@ import 'pages/login_page.dart';
 import 'pages/recommend_page.dart';
 import 'pages/chat_page.dart';
 import 'pages/profile_page.dart';
+import 'pages/points_page.dart';
+
 
 void main() {
   runApp(const CarBuyingAdviceApp());
@@ -47,7 +49,7 @@ class _MainLayoutState extends State<MainLayout> {
     RecommendPage(), // 咨询
     ChatPage(),      // 咨询记录（这里你可以换成 history_page.dart）
     ProfilePage(),   // 我的
-    PointsPage(),    // 我的积分（可以先建个占位页）
+    PointsPage(),    // 我的积分实际的联网版积分页
   ];
 
   @override
@@ -87,25 +89,4 @@ class _MainLayoutState extends State<MainLayout> {
   }
 }
 
-///
-/// “我的积分”占位页（后续可替换为实际积分页）
-///
-class PointsPage extends StatelessWidget {
-  const PointsPage({super.key});
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('我的积分'),
-        centerTitle: true,
-      ),
-      body: const Center(
-        child: Text(
-          '这里展示积分详情或兑换商城',
-          style: TextStyle(fontSize: 16),
-        ),
-      ),
-    );
-  }
-}
