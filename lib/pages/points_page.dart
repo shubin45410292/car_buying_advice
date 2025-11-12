@@ -1,8 +1,8 @@
 // 兑换礼品页面 
 // points_page.dart
 import 'package:flutter/material.dart';
-import 'points_record_page.dart';
-import 'exchange_info_page.dart'; // ✅ 新增导入：兑换信息页
+import 'exchange_info_page.dart';
+import 'exchange_record_page.dart'; // ✅ 新增导入：兑换记录页
 
 class PointsRecordPage extends StatelessWidget {
   const PointsRecordPage({super.key});
@@ -104,8 +104,7 @@ class PointsRecordPage extends StatelessWidget {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.white,
                     foregroundColor: Colors.blue,
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 40, vertical: 12),
+                    padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 12),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(24),
                     ),
@@ -182,12 +181,16 @@ class PointsRecordPage extends StatelessWidget {
             ),
           ),
 
-          // 查看积分记录
+          // ✅ 查看兑换记录按钮
           GestureDetector(
             onTap: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => const PointsPage()),
+                MaterialPageRoute(builder: (_) => const ExchangeRecordPage(
+                  name: '张先生', // 可改为登录用户
+                  phone: '13700000000',
+                  address: '福建省福州大学旗山校区',
+                )),
               );
             },
             child: Container(
@@ -195,7 +198,7 @@ class PointsRecordPage extends StatelessWidget {
               padding: const EdgeInsets.symmetric(vertical: 12),
               alignment: Alignment.centerLeft,
               child: const Text(
-                '查看积分记录',
+                '查看兑换记录',
                 style: TextStyle(
                   fontSize: 16,
                   color: Colors.blue,
@@ -217,13 +220,6 @@ class PointsRecordPage extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
-                  ),
-                ),
-                Text(
-                  '查看兑换记录',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.blue,
                   ),
                 ),
               ],
@@ -250,7 +246,6 @@ class PointsRecordPage extends StatelessWidget {
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // 礼品图片
                     Container(
                       width: 80,
                       height: 80,
@@ -266,7 +261,6 @@ class PointsRecordPage extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(width: 12),
-                    // 礼品信息
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -289,7 +283,6 @@ class PointsRecordPage extends StatelessWidget {
                         ],
                       ),
                     ),
-                    // 积分价格
                     Container(
                       padding: const EdgeInsets.symmetric(
                           horizontal: 10, vertical: 4),
@@ -311,7 +304,6 @@ class PointsRecordPage extends StatelessWidget {
             }).toList(),
           ),
 
-          // 底部空间，避免被导航栏遮挡
           const SizedBox(height: 80),
         ],
       ),
