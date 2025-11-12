@@ -6,9 +6,13 @@ import 'pages/login_page.dart';
 import 'pages/recommend_page.dart';
 import 'pages/consultation_records_page.dart';
 import 'pages/profile_page.dart';
+<<<<<<< HEAD
 import 'pages/points_page.dart'; // ✅ 用积分页
 // import 'pages/points_record_page.dart'; // ❌ 不用这个
 import 'pages/admin_main_page.dart';
+=======
+import 'pages/points_page.dart';
+>>>>>>> 82f8aa4c345fdd06739a19792e2daf169c70b95d
 
 void main() {
   runApp(const CarBuyingAdviceApp());
@@ -31,13 +35,13 @@ class CarBuyingAdviceApp extends StatelessWidget {
         useMaterial3: true,
         fontFamily: 'sans-serif',
       ),
-      home: const LaunchPage(), // ✅ 启动时判断登录状态
+      home: const LaunchPage(), // ✅ 启动时自动判断登录状态
     );
   }
 }
 
 ///
-/// 启动页：检测是否已登录（token存在）
+/// 启动页：判断是否登录（通过 token 判断）
 ///
 class LaunchPage extends StatefulWidget {
   const LaunchPage({super.key});
@@ -60,7 +64,6 @@ class _LaunchPageState extends State<LaunchPage> {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('token');
 
-    // 检查 token 是否存在
     setState(() {
       _isLoggedIn = token != null && token.isNotEmpty;
       _checking = false;
@@ -73,7 +76,7 @@ class _LaunchPageState extends State<LaunchPage> {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
-    // ✅ 没登录 → 登录页；有 token → 主界面
+    // ✅ 根据 token 决定跳转页面
     return _isLoggedIn ? const MainLayout() : const LoginPage();
   }
 }
@@ -84,7 +87,7 @@ class _LaunchPageState extends State<LaunchPage> {
 class MainLayout extends StatefulWidget {
   const MainLayout({super.key});
 
-  /// 静态切换 tab（例如从“我的积分”跳转）
+  /// 从其他页面切换 tab（例如“我的积分”跳转）
   static void switchTab(int index) {
     final state = _MainLayoutState.instance;
     if (state != null && state.mounted) {
@@ -109,12 +112,18 @@ class _MainLayoutState extends State<MainLayout> {
     setState(() => _currentIndex = index);
   }
 
-  // ✅ 四个主页面
   final List<Widget> _pages = const [
+<<<<<<< HEAD
     RecommendPage(), // 0: 咨询推荐
     ConsultationRecordsPage(), // 1: 咨询记录
     ProfilePage(), // 2: 我的
     AdminMainPage(), // 3: 积分中心
+=======
+    RecommendPage(),            // 0: 车型推荐 / 咨询
+    ConsultationRecordsPage(),  // 1: 咨询记录
+    ProfilePage(),              // 2: 我的
+    PointsRecordPage(),               // 3: 积分中心
+>>>>>>> 82f8aa4c345fdd06739a19792e2daf169c70b95d
   ];
 
   @override
