@@ -10,22 +10,40 @@ class EditProfilePage extends StatefulWidget {
 }
 
 class _EditProfilePageState extends State<EditProfilePage> {
-  final TextEditingController brandController = TextEditingController();
-  final TextEditingController typeController = TextEditingController();
   final TextEditingController addressController = TextEditingController();
-  final TextEditingController minBudgetController = TextEditingController();
-  final TextEditingController maxBudgetController = TextEditingController();
+  final TextEditingController budgetMinController = TextEditingController();
+  final TextEditingController budgetMaxController = TextEditingController();
+  final TextEditingController preferredTypeController = TextEditingController();
+  final TextEditingController preferredBrandController =
+      TextEditingController();
 
   bool isLoading = false;
 
-  Future<void> _saveProfile() async {
+  Future<void> _submitUpdate() async {
     final prefs = await SharedPreferences.getInstance();
     final userId = prefs.getString('user_id') ?? '';
-    final token = prefs.getString('token') ?? '';
+    final token = prefs.getString('access_token') ?? '';
 
     if (userId.isEmpty || token.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('未找到登录信息，请重新登录')),
+        const SnackBar(content: Text('请先登录再编辑资料')),
+      );
+      return;
+    }
+
+    final address = addressController.text.trim();
+    final min = int.tryParse(budgetMinController.text.trim()) ?? 0;
+    final max = int.tryParse(budgetMaxController.text.trim()) ?? 0;
+    final type = preferredTypeController.text.trim();
+    final brand = preferredBrandController.text.trim();
+
+    if (address.isEmpty ||
+        type.isEmpty ||
+        brand.isEmpty ||
+        min <= 0 ||
+        max <= 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('请填写完整资料')),
       );
       return;
     }
@@ -35,25 +53,29 @@ class _EditProfilePageState extends State<EditProfilePage> {
     try {
       final result = await ApiService.updateUserInfo(
         userId: userId,
-        token: token, // ✅ 必传 Access-token
-        preferredBrand: brandController.text,
-        preferredType: typeController.text,
-        address: addressController.text,
-        budgetMin: int.tryParse(minBudgetController.text) ?? 0,
-        budgetMax: int.tryParse(maxBudgetController.text) ?? 0,
+        token: token,
+        preferredBrand: brand,
+        preferredType: type,
+        address: address,
+        budgetMin: min,
+        budgetMax: max,
       );
 
-      final code = result['base']?['code'];
-      if (code == 10000) {
+      if (result['base']?['code'] == 10000) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('个人信息更新成功')),
+          const SnackBar(content: Text('✅ 资料更新成功')),
         );
+        Navigator.pop(context);
       } else {
-        throw Exception(result['base']?['msg'] ?? '未知错误');
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+              content: Text(
+                  '❌ 更新失败：${result['base']?['msg'] ?? "服务器未返回错误信息"}')),
+        );
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('请求出错: $e')),
+        SnackBar(content: Text('请求出错：$e')),
       );
     } finally {
       if (mounted) setState(() => isLoading = false);
@@ -63,32 +85,54 @@ class _EditProfilePageState extends State<EditProfilePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFFF7F8FA),
       appBar: AppBar(
-        title: const Text('编辑个人信息'),
+        title: const Text(
+          '编辑个人资料',
+          style: TextStyle(fontWeight: FontWeight.w600),
+        ),
         centerTitle: true,
+        backgroundColor: Colors.white,
+        foregroundColor: Colors.black,
+        elevation: 0,
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: ListView(
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+        child: Column(
           children: [
-            _buildField('偏好的品牌：', brandController),
-            _buildField('偏好的车型：', typeController),
-            _buildField('奖品收货地址：', addressController),
-            _buildField('最高预算（元）：', maxBudgetController,
-                type: TextInputType.number),
-            _buildField('最低预算（元）：', minBudgetController,
-                type: TextInputType.number),
-            const SizedBox(height: 24),
-            ElevatedButton(
-              onPressed: isLoading ? null : _saveProfile,
-              style: ElevatedButton.styleFrom(
-                minimumSize: const Size(double.infinity, 50),
-                backgroundColor: const Color(0xFF1677FF),
-                foregroundColor: Colors.white,
+            _buildTextField('地址', '请输入您的居住地址', addressController),
+            const SizedBox(height: 16),
+            _buildTextField('预算最小值', '例如 10000', budgetMinController,
+                keyboardType: TextInputType.number),
+            const SizedBox(height: 16),
+            _buildTextField('预算最大值', '例如 100000', budgetMaxController,
+                keyboardType: TextInputType.number),
+            const SizedBox(height: 16),
+            _buildTextField('偏好车型', '例如 SUV、轿车', preferredTypeController),
+            const SizedBox(height: 16),
+            _buildTextField('品牌偏好', '例如 比亚迪、吉利', preferredBrandController),
+            const SizedBox(height: 28),
+            SizedBox(
+              width: double.infinity,
+              height: 48,
+              child: ElevatedButton(
+                onPressed: isLoading ? null : _submitUpdate,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF1677FF),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                child: isLoading
+                    ? const CircularProgressIndicator(color: Colors.white)
+                    : const Text(
+                        '保存修改',
+                        style: TextStyle(
+                            fontSize: 17,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.white),
+                      ),
               ),
-              child: isLoading
-                  ? const CircularProgressIndicator(color: Colors.white)
-                  : const Text('保存信息'),
             ),
           ],
         ),
@@ -96,20 +140,40 @@ class _EditProfilePageState extends State<EditProfilePage> {
     );
   }
 
-  Widget _buildField(String label, TextEditingController controller,
-      {TextInputType type = TextInputType.text}) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: TextField(
-        controller: controller,
-        keyboardType: type,
-        decoration: InputDecoration(
-          labelText: label,
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(10),
+  Widget _buildTextField(
+      String label, String hint, TextEditingController controller,
+      {TextInputType keyboardType = TextInputType.text}) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        RichText(
+          text: TextSpan(
+            children: [
+              TextSpan(
+                text: '$label ',
+                style: const TextStyle(color: Colors.black, fontSize: 15),
+              ),
+              const TextSpan(
+                text: '*',
+                style: TextStyle(color: Colors.red),
+              ),
+            ],
           ),
         ),
-      ),
+        const SizedBox(height: 6),
+        TextField(
+          controller: controller,
+          keyboardType: keyboardType,
+          decoration: InputDecoration(
+            hintText: hint,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+            contentPadding:
+                const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+          ),
+        ),
+      ],
     );
   }
 }
