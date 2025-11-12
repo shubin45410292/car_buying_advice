@@ -8,6 +8,7 @@ import 'pages/consultation_records_page.dart';
 import 'pages/profile_page.dart';
 import 'pages/points_page.dart'; // ✅ 用积分页
 // import 'pages/points_record_page.dart'; // ❌ 不用这个
+import 'pages/admin_main_page.dart';
 
 void main() {
   runApp(const CarBuyingAdviceApp());
@@ -69,9 +70,7 @@ class _LaunchPageState extends State<LaunchPage> {
   @override
   Widget build(BuildContext context) {
     if (_checking) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      );
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
     // ✅ 没登录 → 登录页；有 token → 主界面
@@ -112,19 +111,16 @@ class _MainLayoutState extends State<MainLayout> {
 
   // ✅ 四个主页面
   final List<Widget> _pages = const [
-    RecommendPage(),            // 0: 咨询推荐
-    ConsultationRecordsPage(),  // 1: 咨询记录
-    ProfilePage(),              // 2: 我的
-    PointsRecordPage(),         // 3: 积分中心
+    RecommendPage(), // 0: 咨询推荐
+    ConsultationRecordsPage(), // 1: 咨询记录
+    ProfilePage(), // 2: 我的
+    AdminMainPage(), // 3: 积分中心
   ];
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: IndexedStack(
-        index: _currentIndex,
-        children: _pages,
-      ),
+      body: IndexedStack(index: _currentIndex, children: _pages),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _currentIndex,
         type: BottomNavigationBarType.fixed,
