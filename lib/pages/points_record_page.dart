@@ -30,7 +30,6 @@ class _PointsPageState extends State<PointsPage> {
         child: SingleChildScrollView(
           child: Column(
             children: pointsRecords.map((record) {
-              bool isPositive = record['points']!.startsWith('+');
               return Container(
                 margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 padding: const EdgeInsets.symmetric(
@@ -53,9 +52,9 @@ class _PointsPageState extends State<PointsPage> {
                   children: [
                     Text(
                       '${record['description']} ${record['points']}',
-                      style: TextStyle(
+                      style: const TextStyle(
                         fontSize: 14,
-                        color: isPositive ? Colors.green : Colors.red,
+                        color: Colors.black, // 统一使用黑色
                       ),
                     ),
                     Text(
