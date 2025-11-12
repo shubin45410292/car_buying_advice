@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../main.dart'; // 登录成功后跳转到 MainLayout
+import '../main.dart';
+import '../services/api_service.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -10,34 +11,52 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
-  final TextEditingController phoneController = TextEditingController();
+  final TextEditingController usernameController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
   bool remember = false;
 
   Future<void> _login() async {
-    final phone = phoneController.text.trim();
-    final pwd = passwordController.text.trim();
+    final username = usernameController.text.trim();
+    final password = passwordController.text.trim();
 
-    if (phone.isEmpty || pwd.isEmpty) {
-      if (!mounted) return; // ✅ 防止 use_build_context_synchronously 警告
+    if (username.isEmpty || password.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('请输入手机号和密码')),
+        const SnackBar(content: Text('请输入用户名和密码')),
       );
       return;
     }
 
-    // 模拟登录成功
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('username', '张先生');
-    await prefs.setInt('points', 1200);
-    await prefs.setInt('consultCount', 5);
-    await prefs.setInt('favoriteCount', 3);
+    try {
+      final result =
+          await ApiService.login(username: username, password: password);
+      print('登录返回: $result');
 
-    if (!mounted) return; // ✅ 关键修复点
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (_) => const MainLayout()),
-    );
+      final code = result['base']?['code'];
+      final msg = result['base']?['msg'] ?? '未知错误';
+
+      if (code == 10000) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('登录成功')),
+        );
+
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString('username', username);
+
+        if (!mounted) return;
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const MainLayout()),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('登录失败：$msg')),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('请求出错：$e')),
+      );
+    }
   }
 
   @override
@@ -54,9 +73,7 @@ class _LoginPageState extends State<LoginPage> {
       body: SingleChildScrollView(
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 40),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            // ===== 输入卡片 =====
             Container(
               padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
@@ -64,7 +81,7 @@ class _LoginPageState extends State<LoginPage> {
                 borderRadius: BorderRadius.circular(16),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.05),
+                    color: Colors.black.withOpacity(0.05),
                     blurRadius: 8,
                     offset: const Offset(0, 2),
                   ),
@@ -73,10 +90,9 @@ class _LoginPageState extends State<LoginPage> {
               child: Column(
                 children: [
                   TextField(
-                    controller: phoneController,
-                    keyboardType: TextInputType.phone,
+                    controller: usernameController,
                     decoration: const InputDecoration(
-                      labelText: '手机号 *',
+                      labelText: '用户 ID *',
                       border: OutlineInputBorder(),
                     ),
                   ),
@@ -135,30 +151,6 @@ class _LoginPageState extends State<LoginPage> {
               ),
             ),
             const SizedBox(height: 40),
-
-            // ===== 其他登录方式 =====
-            Row(
-              children: const [
-                Expanded(child: Divider(color: Colors.grey)),
-                Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 8),
-                  child: Text('其他登录方式'),
-                ),
-                Expanded(child: Divider(color: Colors.grey)),
-              ],
-            ),
-            const SizedBox(height: 20),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                _buildCircleIcon(Icons.wechat),
-                const SizedBox(width: 30),
-                _buildCircleIcon(Icons.apple),
-              ],
-            ),
-            const SizedBox(height: 30),
-
-            // ===== 注册提示 =====
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
@@ -175,18 +167,6 @@ class _LoginPageState extends State<LoginPage> {
           ],
         ),
       ),
-    );
-  }
-
-  Widget _buildCircleIcon(IconData icon) {
-    return Container(
-      width: 46,
-      height: 46,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        border: Border.all(color: Colors.grey.shade400, width: 1),
-      ),
-      child: Icon(icon, color: Colors.grey.shade600),
     );
   }
 }
