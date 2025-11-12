@@ -1,6 +1,8 @@
+// 兑换礼品页面 
 // points_page.dart
 import 'package:flutter/material.dart';
 import 'points_record_page.dart';
+import 'exchange_info_page.dart'; // ✅ 新增导入：兑换信息页
 
 class PointsRecordPage extends StatelessWidget {
   const PointsRecordPage({super.key});
@@ -10,7 +12,7 @@ class PointsRecordPage extends StatelessWidget {
     // 推荐兑换礼品数据
     final recommendedGifts = [
       {
-        "image": "https://img.51miz.com/Element/00/74/84/40/5b2c1b94_E748440_8377835b.png", // 替换为合适的占位图
+        "image": "https://img.51miz.com/Element/00/74/84/40/5b2c1b94_E748440_8377835b.png",
         "title": "车载快充充电器",
         "desc": "双USB接口，支持快充",
         "points": 500
@@ -93,8 +95,11 @@ class PointsRecordPage extends StatelessWidget {
                 const SizedBox(height: 20),
                 ElevatedButton(
                   onPressed: () {
-                    // 去兑换礼品的逻辑
-                    print('去兑换礼品');
+                    // ✅ 跳转到兑换信息填写页
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const ExchangeInfoPage()),
+                    );
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.white,
@@ -180,7 +185,6 @@ class PointsRecordPage extends StatelessWidget {
           // 查看积分记录
           GestureDetector(
             onTap: () {
-              // 查看积分记录的逻辑
               Navigator.push(
                 context,
                 MaterialPageRoute(builder: (context) => const PointsPage()),
