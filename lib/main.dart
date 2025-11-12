@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+// 页面引入
 import 'pages/login_page.dart';
 import 'pages/recommend_page.dart';
 import 'pages/consultation_records_page.dart';
 import 'pages/profile_page.dart';
-import 'pages/points_page.dart';
-import 'pages/points_record_page.dart';
+import 'pages/points_page.dart'; // ✅ 用积分页
+// import 'pages/points_record_page.dart'; // ❌ 不用这个
 
 void main() {
   runApp(const CarBuyingAdviceApp());
@@ -27,8 +30,52 @@ class CarBuyingAdviceApp extends StatelessWidget {
         useMaterial3: true,
         fontFamily: 'sans-serif',
       ),
-      home: const LoginPage(), // 登录后再跳转 MainLayout
+      home: const LaunchPage(), // ✅ 启动时判断登录状态
     );
+  }
+}
+
+///
+/// 启动页：检测是否已登录（token存在）
+///
+class LaunchPage extends StatefulWidget {
+  const LaunchPage({super.key});
+
+  @override
+  State<LaunchPage> createState() => _LaunchPageState();
+}
+
+class _LaunchPageState extends State<LaunchPage> {
+  bool _checking = true;
+  bool _isLoggedIn = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkLoginStatus();
+  }
+
+  Future<void> _checkLoginStatus() async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('token');
+
+    // 检查 token 是否存在
+    setState(() {
+      _isLoggedIn = token != null && token.isNotEmpty;
+      _checking = false;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_checking) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    // ✅ 没登录 → 登录页；有 token → 主界面
+    return _isLoggedIn ? const MainLayout() : const LoginPage();
   }
 }
 
@@ -38,7 +85,7 @@ class CarBuyingAdviceApp extends StatelessWidget {
 class MainLayout extends StatefulWidget {
   const MainLayout({super.key});
 
-  /// ✅ 静态切换方法，用于从其他页面（如 ProfilePage）切换 Tab
+  /// 静态切换 tab（例如从“我的积分”跳转）
   static void switchTab(int index) {
     final state = _MainLayoutState.instance;
     if (state != null && state.mounted) {
@@ -58,29 +105,26 @@ class _MainLayoutState extends State<MainLayout> {
     instance = this;
   }
 
-  /// ✅ 内部安全切换方法（修复 protected 成员警告）
   void _switchTo(int index) {
     if (!mounted) return;
     setState(() => _currentIndex = index);
   }
 
+  // ✅ 四个主页面
   final List<Widget> _pages = const [
-    RecommendPage(), // 0: 车型推荐 / 咨询
-    ConsultationRecordsPage(),      // 1: 咨询记录
-    ProfilePage(),   // 2: 我的
-    PointsRecordPage(),    // 3: 积分中心
+    RecommendPage(),            // 0: 咨询推荐
+    ConsultationRecordsPage(),  // 1: 咨询记录
+    ProfilePage(),              // 2: 我的
+    PointsRecordPage(),         // 3: 积分中心
   ];
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // ✅ IndexedStack 保留各页状态
       body: IndexedStack(
         index: _currentIndex,
         children: _pages,
       ),
-
-      // ✅ 底部导航栏
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _currentIndex,
         type: BottomNavigationBarType.fixed,
