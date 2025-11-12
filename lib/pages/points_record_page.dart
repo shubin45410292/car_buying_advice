@@ -10,26 +10,10 @@ class PointsPage extends StatefulWidget {
 class _PointsPageState extends State<PointsPage> {
   // 模拟数据：积分记录列表
   List<Map<String, String>> pointsRecords = [
-    {
-      'description': '分享查询结果',
-      'points': '+30',
-      'time': '11:44',
-    },
-    {
-      'description': '兑换usb充电器',
-      'points': '-500',
-      'time': '2024-10-24',
-    },
-    {
-      'description': '每日签到',
-      'points': '+5',
-      'time': '2024-10-23',
-    },
-    {
-      'description': '完成车辆咨询',
-      'points': '+20',
-      'time': '2024-10-23',
-    },
+    {'description': '分享查询结果', 'points': '+30', 'time': '11:44'},
+    {'description': '兑换usb充电器', 'points': '-500', 'time': '2024-10-24'},
+    {'description': '每日签到', 'points': '+5', 'time': '2024-10-23'},
+    {'description': '完成车辆咨询', 'points': '+20', 'time': '2024-10-23'},
   ];
 
   @override
@@ -49,7 +33,10 @@ class _PointsPageState extends State<PointsPage> {
               bool isPositive = record['points']!.startsWith('+');
               return Container(
                 margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(8),
@@ -72,11 +59,8 @@ class _PointsPageState extends State<PointsPage> {
                       ),
                     ),
                     Text(
-                      record['time']!, 
-                      style: const TextStyle(
-                        fontSize: 14,
-                        color: Colors.grey,
-                      ),
+                      record['time']!,
+                      style: const TextStyle(fontSize: 14, color: Colors.grey),
                     ),
                   ],
                 ),
@@ -94,18 +78,9 @@ class _PointsPageState extends State<PointsPage> {
             icon: Icon(Icons.question_answer),
             label: '咨询',
           ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.history),
-            label: '咨询记录',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person),
-            label: '我的',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.star),
-            label: '积分中心',
-          ),
+          BottomNavigationBarItem(icon: Icon(Icons.history), label: '咨询记录'),
+          BottomNavigationBarItem(icon: Icon(Icons.person), label: '我的'),
+          BottomNavigationBarItem(icon: Icon(Icons.star), label: '积分中心'),
         ],
         currentIndex: 3,
         onTap: (index) {
