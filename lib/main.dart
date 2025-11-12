@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'pages/login_page.dart';
 import 'pages/recommend_page.dart';
-import 'pages/chat_page.dart';
+import 'pages/consultation_records_page.dart';
 import 'pages/profile_page.dart';
 import 'pages/points_page.dart';
 import 'pages/points_record_page.dart';
@@ -66,7 +66,7 @@ class _MainLayoutState extends State<MainLayout> {
 
   final List<Widget> _pages = const [
     RecommendPage(), // 0: 车型推荐 / 咨询
-    ChatPage(),      // 1: 咨询记录
+    ConsultationRecordsPage(),      // 1: 咨询记录
     ProfilePage(),   // 2: 我的
     PointsRecordPage(),    // 3: 积分中心
   ];
