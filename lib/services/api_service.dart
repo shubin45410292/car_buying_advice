@@ -276,4 +276,57 @@ class ApiService {
       throw Exception('提交反馈失败: ${response.statusCode}');
     }
   }
+  // ==============================
+  // 🌐 通用 GET 请求
+  // ==============================
+  static Future<Map<String, dynamic>> get(String path) async {
+    final prefs = await SharedPreferences.getInstance();
+    final accessToken = prefs.getString('access_token') ?? '';
+    final refreshToken = prefs.getString('refresh_token') ?? '';
+
+    final url = Uri.parse('$baseUrl$path');
+    logged('📡 GET 请求: $url');
+
+    final response = await http.get(url, headers: {
+      'Content-Type': 'application/json',
+      'Access-token': accessToken,
+      'Refresh-token': refreshToken,
+    });
+
+    logged('📥 响应码: ${response.statusCode}');
+    logged('📦 内容: ${response.body}');
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      throw Exception('GET 请求失败: ${response.statusCode}');
+    }
+  }
+
+  // ==============================
+  // 🌐 携带 Token 的 POST 请求
+  // ==============================
+  static Future<http.Response> authPost(Uri uri,
+      {Map<String, dynamic>? body}) async {
+    final prefs = await SharedPreferences.getInstance();
+    final accessToken = prefs.getString('access_token') ?? '';
+    final refreshToken = prefs.getString('refresh_token') ?? '';
+
+    logged('📡 POST 请求: $uri');
+
+    final response = await http.post(
+      uri,
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-token': accessToken,
+        'Refresh-token': refreshToken,
+      },
+      body: body != null ? jsonEncode(body) : null,
+    );
+
+    logged('📥 响应码: ${response.statusCode}');
+    logged('📦 内容: ${response.body}');
+    return response;
+  }
+
 }

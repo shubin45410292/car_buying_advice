@@ -112,7 +112,7 @@ class _MainLayoutState extends State<MainLayout> {
     RecommendPage(), // 0: 咨询推荐
     ConsultationRecordsPage(), // 1: 咨询记录
     ProfilePage(), // 2: 我的
-    AdminMainPage(), // 3: 积分中心
+    PointsRecordPage(), // 3: 积分中心
   ];
 
   @override
