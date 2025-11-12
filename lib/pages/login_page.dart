@@ -3,6 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../main.dart';
 import '../services/api_service.dart';
 import 'register_page.dart';
+import 'admin_main_page.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -20,21 +21,6 @@ class _LoginPageState extends State<LoginPage> {
   @override
   void initState() {
     super.initState();
-    _checkExistingLogin();
-  }
-
-  Future<void> _checkExistingLogin() async {
-    final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('access_token');
-    if (token != null && token.isNotEmpty) {
-      // 如果已有token，直接跳转到主页面
-      if (mounted) {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (_) => const MainLayout()),
-        );
-      }
-    }
   }
 
   Future<void> _login() async {
@@ -50,31 +36,38 @@ class _LoginPageState extends State<LoginPage> {
     setState(() => isLoading = true);
 
     try {
-      // ✅ 发请求
+      // ✅ 发登录请求
       final result = await ApiService.login(userId: userId, password: password);
       final code = result['base']?['code'];
 
       if (code == 10000) {
-        // ✅ 从响应头中提取 tokens
+        // ✅ 登录成功
         final accessToken = result['headers']?['access-token'] ?? '';
         final refreshToken = result['headers']?['refresh-token'] ?? '';
-        
-        final prefs = await SharedPreferences.getInstance();
 
+        final prefs = await SharedPreferences.getInstance();
         await prefs.setString('user_id', userId);
         await prefs.setString('access_token', accessToken);
         await prefs.setString('refresh_token', refreshToken);
 
         if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('登录成功')),
-        );
+        ScaffoldMessenger.of(context)
+            .showSnackBar(const SnackBar(content: Text('登录成功')));
 
-        // ✅ 跳主界面
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (_) => const MainLayout()),
-        );
+        // ✅ 登录成功后再判断跳转
+        Future.delayed(const Duration(milliseconds: 500), () {
+          if (userId == 'admin') {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (_) => const AdminMainPage()),
+            );
+          } else {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (_) => const MainLayout()),
+            );
+          }
+        });
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('登录失败：${result['base']?['msg'] ?? "未知错误"}')),
@@ -122,8 +115,7 @@ class _LoginPageState extends State<LoginPage> {
                 children: [
                   _buildLabeledField('账号（user_id）', userIdController),
                   const SizedBox(height: 20),
-                  _buildLabeledField('密码', passwordController,
-                      obscure: true),
+                  _buildLabeledField('密码', passwordController, obscure: true),
                   const SizedBox(height: 10),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
