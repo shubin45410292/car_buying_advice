@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
-class AdminConsultationListPage extends StatelessWidget {
+class AdminConsultationListPage extends StatefulWidget {
   final String accessToken;
   final String refreshToken;
 
@@ -12,6 +12,14 @@ class AdminConsultationListPage extends StatelessWidget {
     required this.accessToken,
     required this.refreshToken,
   }) : super(key: key);
+
+  @override
+  State<AdminConsultationListPage> createState() =>
+      _AdminConsultationListPageState();
+}
+
+class _AdminConsultationListPageState extends State<AdminConsultationListPage> {
+  final GlobalKey<_ConsultationListContentState> _listContentKey = GlobalKey();
 
   @override
   Widget build(BuildContext context) {
@@ -38,7 +46,7 @@ class AdminConsultationListPage extends StatelessWidget {
                 IconButton(
                   icon: const Icon(Icons.refresh, color: Colors.black),
                   onPressed: () {
-                    // 刷新功能将在_ConsultationListContent中实现
+                    _listContentKey.currentState?._refresh();
                   },
                 ),
               ],
@@ -74,7 +82,9 @@ class AdminConsultationListPage extends StatelessWidget {
                       ),
                       style: const TextStyle(fontSize: 14, color: Colors.black),
                       onChanged: (value) {
-                        // 搜索功能
+                        _listContentKey.currentState?._onSearchTextChanged(
+                          value,
+                        );
                       },
                     ),
                   ),
@@ -89,8 +99,9 @@ class AdminConsultationListPage extends StatelessWidget {
             child: Container(
               color: Colors.white,
               child: _ConsultationListContent(
-                accessToken: accessToken,
-                refreshToken: refreshToken,
+                key: _listContentKey,
+                accessToken: widget.accessToken,
+                refreshToken: widget.refreshToken,
               ),
             ),
           ),
@@ -115,52 +126,58 @@ class ConsultationResponse {
   }
 
   // 创建模拟数据 - 根据提供的JSON结构
-  static ConsultationResponse mockData() {
+  static ConsultationResponse mockData({int pageNum = 1}) {
+    // 根据页码生成不同的模拟数据
+    final items = List.generate(5, (index) {
+      final id = (pageNum - 1) * 5 + index + 1;
+      return ConsultationItem(
+        consult: ConsultInfo(
+          userId: "13712345${679 + id}",
+          consultId: id,
+          budgetRange: "${15 + id}万元左右",
+          preferredType: index % 3 == 0
+              ? "SUV"
+              : index % 3 == 1
+              ? "轿车"
+              : "MPV",
+          useCase: index % 2 == 0 ? "每天上下班通勤" : "家庭使用，周末出游",
+          fuelType: index % 4 == 0
+              ? "电动"
+              : index % 4 == 1
+              ? "混合动力"
+              : index % 4 == 2
+              ? "汽油"
+              : "柴油",
+          brandPreference: index % 2 == 0 ? "比亚迪、吉利" : "特斯拉、蔚来",
+        ),
+        consultResult: ConsultResult(
+          analysis: "根据用户需求进行的详细分析...",
+          proposal: "基于预算和使用场景的专业建议...",
+          result: List.generate(
+            2,
+            (carIndex) => CarRecommendation(
+              imageUrl: "https://example.com/car${carIndex + 1}.jpg",
+              carName: carIndex == 0 ? "比亚迪唐EV" : "吉利帝豪GSe",
+              fuelConsumption: "N/A (纯电)",
+              power: carIndex == 0
+                  ? "最大功率180kW, 最大扭矩330Nm"
+                  : "最大功率120kW, 最大扭矩250Nm",
+              seat: carIndex == 0 ? "5座/7座可选" : "5座",
+              drive: carIndex == 0 ? "前驱/四驱可选" : "前驱",
+              recommendedReason: carIndex == 0
+                  ? "比亚迪唐EV以其出色的续航里程和空间表现著称，非常适合家庭使用。"
+                  : "吉利帝豪GSe不仅拥有时尚动感的外观设计，而且在经济性和实用性方面也表现出色。",
+            ),
+          ),
+        ),
+      );
+    });
+
     return ConsultationResponse(
       base: BaseResponse(code: 10000, msg: "success"),
       data: ConsultationData(
-        items: [
-          ConsultationItem(
-            consult: ConsultInfo(
-              userId: "13712345679",
-              consultId: 1,
-              budgetRange: "20万元左右",
-              preferredType: "SUV",
-              useCase: "每天上下班通勤，来回大概40公里，周末偶尔在市区逛逛",
-              fuelType: "电动",
-              brandPreference: "比亚迪、吉利",
-            ),
-            consultResult: ConsultResult(
-              analysis:
-                  "根据您的需求，您希望购买一款价格大约在20万元左右的SUV车型，主要用于日常上下班通勤（单日往返约40公里），以及周末偶尔的城市内活动。考虑到您对电动车的兴趣及指定的品牌偏好（比亚迪、吉利），下面为您推荐几款符合要求的电动汽车。",
-              proposal:
-                  "鉴于您的预算范围和个人喜好，在比亚迪唐EV和吉利帝豪GSe之间选择会是比较好的决定。两者都是市场上口碑不错的电动SUV选项，但具体选择哪一款还需考虑个人对车辆尺寸、配置等方面的具体需求。建议亲自试驾体验后再做最终决定。",
-              result: [
-                CarRecommendation(
-                  imageUrl: "https://example.com/byd_tang_ev.jpg",
-                  carName: "比亚迪唐EV",
-                  fuelConsumption: "N/A (纯电)",
-                  power: "最大功率180kW, 最大扭矩330Nm",
-                  seat: "5座/7座可选",
-                  drive: "前驱/四驱可选",
-                  recommendedReason:
-                      "比亚迪唐EV以其出色的续航里程和空间表现著称，非常适合家庭使用。其先进的电池技术和智能驾驶辅助系统能够满足您对于科技感的需求。",
-                ),
-                CarRecommendation(
-                  imageUrl: "https://example.com/geely_emgrand_xev.jpg",
-                  carName: "吉利帝豪GSe",
-                  fuelConsumption: "N/A (纯电)",
-                  power: "最大功率120kW, 最大扭矩250Nm",
-                  seat: "5座",
-                  drive: "前驱",
-                  recommendedReason:
-                      "作为一款性价比极高的紧凑型SUV，吉利帝豪GSe不仅拥有时尚动感的外观设计，而且在经济性和实用性方面也表现出色，非常适合城市通勤与周末短途旅行。",
-                ),
-              ],
-            ),
-          ),
-        ],
-        total: 1,
+        items: items,
+        total: 15, // 模拟总记录数
       ),
     );
   }
@@ -173,7 +190,7 @@ class BaseResponse {
   BaseResponse({required this.code, required this.msg});
 
   factory BaseResponse.fromJson(Map<String, dynamic> json) {
-    return BaseResponse(code: json['code'], msg: json['msg']);
+    return BaseResponse(code: json['code'] ?? 0, msg: json['msg'] ?? '');
   }
 }
 
@@ -185,10 +202,10 @@ class ConsultationData {
 
   factory ConsultationData.fromJson(Map<String, dynamic> json) {
     return ConsultationData(
-      items: (json['item'] as List)
+      items: (json['item'] as List? ?? [])
           .map((item) => ConsultationItem.fromJson(item))
           .toList(),
-      total: json['total'],
+      total: json['total'] ?? 0,
     );
   }
 }
@@ -228,13 +245,13 @@ class ConsultInfo {
 
   factory ConsultInfo.fromJson(Map<String, dynamic> json) {
     return ConsultInfo(
-      userId: json['UserId'],
-      consultId: json['ConsultId'],
-      budgetRange: json['BudgetRange'],
-      preferredType: json['PreferredType'],
-      useCase: json['UseCase'],
-      fuelType: json['FuelType'],
-      brandPreference: json['BrandPreference'],
+      userId: json['UserId'] ?? '',
+      consultId: json['ConsultId'] ?? 0,
+      budgetRange: json['BudgetRange'] ?? '',
+      preferredType: json['PreferredType'] ?? '',
+      useCase: json['UseCase'] ?? '',
+      fuelType: json['FuelType'] ?? '',
+      brandPreference: json['BrandPreference'] ?? '',
     );
   }
 }
@@ -252,9 +269,9 @@ class ConsultResult {
 
   factory ConsultResult.fromJson(Map<String, dynamic> json) {
     return ConsultResult(
-      analysis: json['Analysis'],
-      proposal: json['Proposal'],
-      result: (json['Result'] as List)
+      analysis: json['Analysis'] ?? '',
+      proposal: json['Proposal'] ?? '',
+      result: (json['Result'] as List? ?? [])
           .map((car) => CarRecommendation.fromJson(car))
           .toList(),
     );
@@ -282,13 +299,13 @@ class CarRecommendation {
 
   factory CarRecommendation.fromJson(Map<String, dynamic> json) {
     return CarRecommendation(
-      imageUrl: json['ImageUrl'],
-      carName: json['CarName'],
-      fuelConsumption: json['FuelConsumption'],
-      power: json['Power'],
-      seat: json['Seat'],
-      drive: json['Drive'],
-      recommendedReason: json['RecommendedReason'],
+      imageUrl: json['ImageUrl'] ?? '',
+      carName: json['CarName'] ?? '',
+      fuelConsumption: json['FuelConsumption'] ?? '',
+      power: json['Power'] ?? '',
+      seat: json['Seat'] ?? '',
+      drive: json['Drive'] ?? '',
+      recommendedReason: json['RecommendedReason'] ?? '',
     );
   }
 }
@@ -304,8 +321,7 @@ class ConsultationService {
     int pageSize = 10,
     int pageNum = 1,
   }) async {
-    // TODO: 替换为实际的API端点
-    const apiUrl = 'http://your-api-domain.com/api/admin/consult/query';
+    const apiUrl = 'http://204.152.192.27:8080/api/admin/consult/query';
 
     try {
       final uri = Uri.parse(apiUrl).replace(
@@ -315,41 +331,51 @@ class ConsultationService {
         },
       );
 
-      print('发送API请求到: $uri');
-      print('请求头 - Access-token: $accessToken');
-      print('请求头 - Refresh-token: $refreshToken');
+      print('📡 发送API请求到: $uri');
+      print('🔑 请求头 - Access-token: $accessToken');
+      print('🔑 请求头 - Refresh-token: $refreshToken');
 
-      final response = await http.get(
-        uri,
-        headers: {
-          'Content-Type': 'application/json',
-          'Access-token': accessToken,
-          'Refresh-token': refreshToken,
-        },
-      );
+      final response = await http
+          .get(
+            uri,
+            headers: {
+              'Content-Type': 'application/json',
+              'Access-token': accessToken,
+              'Refresh-token': refreshToken,
+            },
+          )
+          .timeout(const Duration(seconds: 30));
 
-      print('API响应状态码: ${response.statusCode}');
-      print('API响应体: ${response.body}');
+      print('📥 API响应状态码: ${response.statusCode}');
+      print('📦 API响应体: ${response.body}');
 
       if (response.statusCode == 200) {
-        final responseData = jsonDecode(response.body);
-        return ConsultationResponse.fromJson(responseData);
+        final responseData = jsonDecode(utf8.decode(response.bodyBytes));
+
+        // 检查业务状态码
+        if (responseData['base']?['code'] == 10000) {
+          return ConsultationResponse.fromJson(responseData);
+        } else {
+          throw Exception('业务错误: ${responseData['base']?['msg']}');
+        }
+      } else if (response.statusCode == 401) {
+        throw Exception('Token无效或已过期');
+      } else if (response.statusCode == 403) {
+        throw Exception('无权限访问');
       } else {
-        print('API请求失败，状态码: ${response.statusCode}');
-        // 返回模拟数据
-        return _getMockResponse();
+        throw Exception('HTTP错误: ${response.statusCode}');
       }
     } catch (e) {
-      print('HTTP请求异常: $e');
+      print('💥 HTTP请求异常: $e');
       // 返回模拟数据
-      return _getMockResponse();
+      return _getMockResponse(pageNum: pageNum);
     }
   }
 
   // 返回模拟数据
-  ConsultationResponse _getMockResponse() {
-    print('使用模拟数据');
-    return ConsultationResponse.mockData();
+  ConsultationResponse _getMockResponse({int pageNum = 1}) {
+    print('🔄 使用模拟数据，页码: $pageNum');
+    return ConsultationResponse.mockData(pageNum: pageNum);
   }
 }
 
@@ -359,9 +385,10 @@ class _ConsultationListContent extends StatefulWidget {
   final String refreshToken;
 
   const _ConsultationListContent({
+    Key? key,
     required this.accessToken,
     required this.refreshToken,
-  });
+  }) : super(key: key);
 
   @override
   State<_ConsultationListContent> createState() =>
@@ -373,8 +400,15 @@ class _ConsultationListContentState extends State<_ConsultationListContent> {
   List<ConsultationItem> _consultations = [];
   List<ConsultationItem> _filteredConsultations = [];
   bool _isLoading = true;
+  bool _isLoadingMore = false;
   String _errorMessage = '';
   String _searchText = '';
+
+  // 分页相关状态
+  int _currentPage = 1;
+  final int _pageSize = 10; // 固定每页显示10条记录
+  int _totalRecords = 0;
+  bool _hasMore = true;
 
   @override
   void initState() {
@@ -383,34 +417,58 @@ class _ConsultationListContentState extends State<_ConsultationListContent> {
       accessToken: widget.accessToken,
       refreshToken: widget.refreshToken,
     );
-    _loadConsultationRecords();
+    _loadConsultationRecords(pageNum: 1);
   }
 
-  Future<void> _loadConsultationRecords() async {
+  Future<void> _loadConsultationRecords({
+    int pageNum = 1,
+    bool loadMore = false,
+  }) async {
     try {
-      setState(() {
-        _isLoading = true;
-        _errorMessage = '';
-      });
+      if (loadMore) {
+        setState(() {
+          _isLoadingMore = true;
+        });
+      } else {
+        setState(() {
+          _isLoading = true;
+          _errorMessage = '';
+        });
+      }
 
-      final response = await _consultationService.getConsultationRecords();
+      final response = await _consultationService.getConsultationRecords(
+        pageSize: _pageSize,
+        pageNum: pageNum,
+      );
 
       if (response.base.code == 10000) {
         setState(() {
-          _consultations = response.data.items;
+          if (loadMore) {
+            // 加载更多，追加数据
+            _consultations.addAll(response.data.items);
+          } else {
+            // 重新加载，替换数据
+            _consultations = response.data.items;
+            _currentPage = pageNum;
+          }
           _filteredConsultations = _consultations;
+          _totalRecords = response.data.total;
+          _hasMore = _consultations.length < _totalRecords;
           _isLoading = false;
+          _isLoadingMore = false;
         });
       } else {
         setState(() {
           _errorMessage = response.base.msg;
           _isLoading = false;
+          _isLoadingMore = false;
         });
       }
     } catch (e) {
       setState(() {
         _errorMessage = '网络错误: $e';
         _isLoading = false;
+        _isLoadingMore = false;
       });
       print('加载咨询记录错误: $e');
     }
@@ -418,11 +476,19 @@ class _ConsultationListContentState extends State<_ConsultationListContent> {
 
   void _refresh() {
     setState(() {
-      _isLoading = true;
-      _errorMessage = '';
       _searchText = '';
     });
-    _loadConsultationRecords();
+    _loadConsultationRecords(pageNum: 1);
+  }
+
+  void _loadNextPage() {
+    if (!_isLoadingMore && _hasMore) {
+      _loadConsultationRecords(pageNum: _currentPage + 1, loadMore: true);
+    }
+  }
+
+  void _loadPage(int pageNum) {
+    _loadConsultationRecords(pageNum: pageNum);
   }
 
   void _onSearchTextChanged(String text) {
@@ -432,12 +498,24 @@ class _ConsultationListContentState extends State<_ConsultationListContent> {
         _filteredConsultations = _consultations;
       } else {
         _filteredConsultations = _consultations.where((consult) {
-          return consult.consult.userId.contains(text) ||
-              consult.consult.budgetRange.contains(text) ||
-              consult.consult.preferredType.contains(text) ||
-              consult.consult.fuelType.contains(text) ||
-              consult.consult.brandPreference.contains(text) ||
-              consult.consult.useCase.contains(text);
+          return consult.consult.userId.toLowerCase().contains(
+                text.toLowerCase(),
+              ) ||
+              consult.consult.budgetRange.toLowerCase().contains(
+                text.toLowerCase(),
+              ) ||
+              consult.consult.preferredType.toLowerCase().contains(
+                text.toLowerCase(),
+              ) ||
+              consult.consult.fuelType.toLowerCase().contains(
+                text.toLowerCase(),
+              ) ||
+              consult.consult.brandPreference.toLowerCase().contains(
+                text.toLowerCase(),
+              ) ||
+              consult.consult.useCase.toLowerCase().contains(
+                text.toLowerCase(),
+              );
         }).toList();
       }
     });
@@ -445,7 +523,7 @@ class _ConsultationListContentState extends State<_ConsultationListContent> {
 
   @override
   Widget build(BuildContext context) {
-    if (_isLoading) {
+    if (_isLoading && _currentPage == 1) {
       return Container(
         color: Colors.white,
         child: const Center(
@@ -456,7 +534,7 @@ class _ConsultationListContentState extends State<_ConsultationListContent> {
       );
     }
 
-    if (_errorMessage.isNotEmpty) {
+    if (_errorMessage.isNotEmpty && _currentPage == 1) {
       return Container(
         color: Colors.white,
         child: Center(
@@ -490,54 +568,110 @@ class _ConsultationListContentState extends State<_ConsultationListContent> {
       );
     }
 
-    if (_filteredConsultations.isEmpty) {
-      return Container(
-        color: Colors.white,
-        child: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(Icons.search_off, size: 64, color: Color(0xFFD0D5DD)),
-              const SizedBox(height: 16),
-              Text(
-                _searchText.isEmpty ? '暂无咨询记录' : '未找到相关咨询记录',
-                style: const TextStyle(fontSize: 16, color: Color(0xFF667085)),
+    final totalPages = (_totalRecords / _pageSize).ceil();
+    final showPagination = totalPages > 1 && _searchText.isEmpty;
+
+    return Column(
+      children: [
+        // 列表内容
+        Expanded(
+          child: Container(
+            color: Colors.white,
+            child: RefreshIndicator(
+              onRefresh: () async => _refresh(),
+              backgroundColor: Colors.white,
+              color: const Color(0xFF007AFF),
+              child: ListView.builder(
+                padding: const EdgeInsets.all(16),
+                itemCount:
+                    _filteredConsultations.length + (_isLoadingMore ? 1 : 0),
+                itemBuilder: (context, index) {
+                  if (index == _filteredConsultations.length &&
+                      _isLoadingMore) {
+                    return const Padding(
+                      padding: EdgeInsets.all(16),
+                      child: Center(
+                        child: CircularProgressIndicator(
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            Color(0xFF1677FF),
+                          ),
+                        ),
+                      ),
+                    );
+                  }
+
+                  if (index == _filteredConsultations.length - 5 &&
+                      _hasMore &&
+                      _searchText.isEmpty) {
+                    // 滑动到底部前5个item时自动加载更多
+                    WidgetsBinding.instance.addPostFrameCallback((_) {
+                      _loadNextPage();
+                    });
+                  }
+
+                  return _buildConsultationCard(_filteredConsultations[index]);
+                },
               ),
-              if (_searchText.isEmpty) ...[
-                const SizedBox(height: 16),
-                ElevatedButton(
-                  onPressed: _refresh,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF007AFF),
-                    foregroundColor: Colors.white,
-                  ),
-                  child: const Text('刷新'),
-                ),
-              ],
-            ],
+            ),
           ),
         ),
-      );
-    }
 
+        // 分页控件
+        if (showPagination) _buildPagination(totalPages),
+      ],
+    );
+  }
+
+  // 构建分页控件
+  Widget _buildPagination(int totalPages) {
     return Container(
       color: Colors.white,
-      child: RefreshIndicator(
-        onRefresh: () async => _refresh(),
-        backgroundColor: Colors.white,
-        color: const Color(0xFF007AFF),
-        child: ListView.builder(
-          padding: const EdgeInsets.all(16),
-          itemCount: _filteredConsultations.length,
-          itemBuilder: (context, index) {
-            return _buildConsultationCard(_filteredConsultations[index]);
-          },
-        ),
+      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          // 上一页按钮
+          IconButton(
+            icon: const Icon(Icons.chevron_left, size: 24),
+            onPressed: _currentPage > 1
+                ? () => _loadPage(_currentPage - 1)
+                : null,
+            color: _currentPage > 1 ? const Color(0xFF1677FF) : Colors.grey,
+          ),
+
+          const SizedBox(width: 8),
+
+          // 页码显示
+          Text(
+            '第 $_currentPage 页 / 共 $totalPages 页',
+            style: const TextStyle(fontSize: 14, color: Color(0xFF667085)),
+          ),
+
+          const SizedBox(width: 8),
+
+          // 下一页按钮
+          IconButton(
+            icon: const Icon(Icons.chevron_right, size: 24),
+            onPressed: _currentPage < totalPages
+                ? () => _loadPage(_currentPage + 1)
+                : null,
+            color: _currentPage < totalPages
+                ? const Color(0xFF1677FF)
+                : Colors.grey,
+          ),
+
+          const SizedBox(width: 16),
+
+          // 总记录数
+          Text(
+            '共 $_totalRecords 条记录',
+            style: const TextStyle(fontSize: 12, color: Color(0xFF667085)),
+          ),
+        ],
       ),
     );
   }
 
-  // 以下方法保持不变...
   Widget _buildConsultationCard(ConsultationItem item) {
     return Card(
       margin: const EdgeInsets.only(bottom: 16),
@@ -557,7 +691,7 @@ class _ConsultationListContentState extends State<_ConsultationListContent> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  'ID: ${item.consult.userId}',
+                  '用户: ${item.consult.userId}',
                   style: const TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 16,
@@ -565,7 +699,7 @@ class _ConsultationListContentState extends State<_ConsultationListContent> {
                   ),
                 ),
                 Text(
-                  _formatConsultationTime(item.consult.consultId),
+                  '咨询ID: ${item.consult.consultId}',
                   style: const TextStyle(
                     color: Color(0xFF667085),
                     fontSize: 12,
@@ -679,12 +813,6 @@ class _ConsultationListContentState extends State<_ConsultationListContent> {
     return tags;
   }
 
-  String _formatConsultationTime(int consultId) {
-    final now = DateTime.now();
-    final consultTime = now.subtract(Duration(hours: consultId * 2));
-    return '${consultTime.hour.toString().padLeft(2, '0')}:${consultTime.minute.toString().padLeft(2, '0')}';
-  }
-
   void _showConsultationDetail(ConsultationItem item) {
     showModalBottomSheet(
       context: context,
@@ -735,6 +863,7 @@ class _ConsultationListContentState extends State<_ConsultationListContent> {
                 children: [
                   _buildDetailSection('用户信息', '''
 用户ID: ${item.consult.userId}
+咨询ID: ${item.consult.consultId}
 预算范围: ${item.consult.budgetRange}
 偏好车型: ${item.consult.preferredType}
 能源类型: ${item.consult.fuelType}
@@ -776,7 +905,7 @@ class _ConsultationListContentState extends State<_ConsultationListContent> {
             borderRadius: BorderRadius.circular(8),
           ),
           child: Text(
-            content,
+            content.trim(),
             style: const TextStyle(
               fontSize: 14,
               height: 1.5,

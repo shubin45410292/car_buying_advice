@@ -7,6 +7,8 @@ import 'pages/recommend_page.dart';
 import 'pages/consultation_records_page.dart';
 import 'pages/profile_page.dart';
 import 'pages/points_page.dart';
+import 'pages/admin_main_page.dart';
+
 
 void main() {
   runApp(const CarBuyingAdviceApp());
@@ -110,7 +112,7 @@ class _MainLayoutState extends State<MainLayout> {
     RecommendPage(), // 0: 咨询推荐
     ConsultationRecordsPage(), // 1: 咨询记录
     ProfilePage(), // 2: 我的
-    PointsRecordPage(), // 3: 积分中心
+    AdminMainPage(), // 3: 积分中心
   ];
 
   @override

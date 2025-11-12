@@ -17,6 +17,26 @@ class _LoginPageState extends State<LoginPage> {
   bool remember = false;
   bool isLoading = false;
 
+  @override
+  void initState() {
+    super.initState();
+    _checkExistingLogin();
+  }
+
+  Future<void> _checkExistingLogin() async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('access_token');
+    if (token != null && token.isNotEmpty) {
+      // 如果已有token，直接跳转到主页面
+      if (mounted) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const MainLayout()),
+        );
+      }
+    }
+  }
+
   Future<void> _login() async {
     final userId = userIdController.text.trim();
     final password = passwordController.text.trim();
@@ -35,11 +55,15 @@ class _LoginPageState extends State<LoginPage> {
       final code = result['base']?['code'];
 
       if (code == 10000) {
-        final token = result['data']?['token'] ?? ''; // ✅ 从data里取token
+        // ✅ 从响应头中提取 tokens
+        final accessToken = result['headers']?['access-token'] ?? '';
+        final refreshToken = result['headers']?['refresh-token'] ?? '';
+        
         final prefs = await SharedPreferences.getInstance();
 
         await prefs.setString('user_id', userId);
-        await prefs.setString('token', token);
+        await prefs.setString('access_token', accessToken);
+        await prefs.setString('refresh_token', refreshToken);
 
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(

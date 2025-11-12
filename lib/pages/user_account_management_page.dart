@@ -269,7 +269,7 @@ class UserAccountService {
   }) async {
     try {
       // TODO: 替换为实际的API端点
-      const apiUrl = 'http://your-api-domain.com/api/admin/user/list';
+      const apiUrl = 'http://204.152.192.27:8080/api/admin/user/list';
 
       final response = await http
           .get(
@@ -306,7 +306,7 @@ class UserAccountService {
   Future<bool> updateAccountStatus(String userId, bool status) async {
     try {
       // TODO: 替换为实际的API端点
-      const apiUrl = 'http://your-api-domain.com/api/admin/user/status';
+      const apiUrl = 'http://204.152.192.27:8080/api/admin/user/status';
 
       final response = await http
           .post(
@@ -339,7 +339,7 @@ class UserAccountService {
   Future<bool> deleteUserAccount(String userId) async {
     try {
       // TODO: 替换为实际的API端点
-      const apiUrl = 'http://your-api-domain.com/api/admin/user/delete';
+      const apiUrl = 'http://204.152.192.27:8080/api/admin/user/delete';
 
       final response = await http
           .delete(
