@@ -6,13 +6,7 @@ import 'pages/login_page.dart';
 import 'pages/recommend_page.dart';
 import 'pages/consultation_records_page.dart';
 import 'pages/profile_page.dart';
-<<<<<<< HEAD
-import 'pages/points_page.dart'; // ✅ 用积分页
-// import 'pages/points_record_page.dart'; // ❌ 不用这个
-import 'pages/admin_main_page.dart';
-=======
 import 'pages/points_page.dart';
->>>>>>> 82f8aa4c345fdd06739a19792e2daf169c70b95d
 
 void main() {
   runApp(const CarBuyingAdviceApp());
@@ -113,17 +107,10 @@ class _MainLayoutState extends State<MainLayout> {
   }
 
   final List<Widget> _pages = const [
-<<<<<<< HEAD
     RecommendPage(), // 0: 咨询推荐
     ConsultationRecordsPage(), // 1: 咨询记录
     ProfilePage(), // 2: 我的
-    AdminMainPage(), // 3: 积分中心
-=======
-    RecommendPage(),            // 0: 车型推荐 / 咨询
-    ConsultationRecordsPage(),  // 1: 咨询记录
-    ProfilePage(),              // 2: 我的
-    PointsRecordPage(),               // 3: 积分中心
->>>>>>> 82f8aa4c345fdd06739a19792e2daf169c70b95d
+    PointsRecordPage(), // 3: 积分中心
   ];
 
   @override
